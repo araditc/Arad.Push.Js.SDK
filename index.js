@@ -1,10 +1,10 @@
-// Import the functions you need from the SDKs you need
 const { rejects } = require("assert");
 const { initializeApp } = require("firebase/app");
 const { getMessaging, getToken, onMessage } = require("firebase/messaging");
-const mqtt = require("mqtt");  // require mqtt
+const mqtt = require("mqtt");
 const { resolve } = require("url");
-const EventEmitter = require('events'); // Add this line
+const EventEmitter = require('events');
+const { Client } = require('@stomp/stompjs');
 const CryptoJS = require("crypto-js");
 
 class Arad extends EventEmitter {
@@ -20,47 +20,39 @@ class Arad extends EventEmitter {
     this.secretKey = null;
   }
   // 1. init fb
-  init() {
+  init(firebaseConfig, vapidkey) {
     return new Promise((resolve, reject) => {
       if (!this.initing) {
         this.initing = true;
-        const firebaseConfig = {
-          apiKey: "AIzaSyDzxtNGFeXozmc_kYzHZhg2r9Ereo2wukg",
-          authDomain: "omid-f8d2b.firebaseapp.com",
-          projectId: "omid-f8d2b",
-          storageBucket: "omid-f8d2b.appspot.com",
-          messagingSenderId: "422067721913",
-          appId: "1:422067721913:web:25ff75784eeb4e13012d68",
-          measurementId: "G-QD1S8P5TMW"
-        };
         const app = initializeApp(firebaseConfig);
         Notification.requestPermission().then((permission) => {
           if (permission === 'granted') {
             const messaging = getMessaging();
-            getToken(messaging, { vapidKey: 'BB0rUaCvQVl1NA9sENmz9yOEkO4pZAznc44Uvzul8Z3lo8PAftUvfjwhaDwpJd5waExuO8jVctt_KZnJsCf_mqY' }).then((currentToken) => {
+            getToken(messaging, { vapidKey: vapidkey }).then((currentToken) => {
               if (currentToken) {
                 this.fcm = currentToken;
                 resolve(this.fcm);
-                this.emit('fcm', this.fcm);
                 this.initing = false;
               } else {
                 reject('Can not init firebase.');
                 this.initing = false;
               }
             }).catch((err) => {
-              console.error('An error occurred while retrieving token. ', err);
+              // console.error('An error occurred while retrieving token. ', err);
+              reject('Can not init firebase.');
               this.initing = false;
             });
 
             // Handle incoming messages
             onMessage(messaging, (payload) => {
-              console.log('Message received. ', payload.notification);
+              // console.log('Message received. ', payload.notification);
               if (checkConfig()) {
-                connectMQTT(payload.notification);
+                // connectMQTT(payload.notification);
+                connect();
               }
             });
           } else {
-            console.log('Unable to get permission to notify.');
+            // console.log('Unable to get permission to notify.');
           }
         });
       }
@@ -119,37 +111,37 @@ class Arad extends EventEmitter {
     }
     return ready;
   }
-  // connect to mqtt, send message and disconnect
-  connectMQTT(msg) {
-    const config = this.config;
-    config.clientId = generateClientId();
-    console.log('▬ ▬ ▬', msg);
-    console.log('▬ ▬ ▬', config);
-    this.client = mqtt.connect(this.broker, config);
-    this.client.on("connect", (err) => {
-      if (!err) {
-        // subscribe();
-        console.warn('MQTT CONNECTED to', this.broker);
-        client.publish(this.mqttTopic, msg, (err) => {
-          if (!err) {
-            console.log('• message sent');
-          } else {
-            console.warn('• message not sent')
-          }
-        });
-      } else {
-        console.log('can not connect to mqtt', err);
-      }
+  // connect
+  connect() {
+    const topic = decryptConfig(localStorage.getItem('config')).username;
+    const client = new Client({
+      brokerURL: 'ws://127.0.0.1:15674/ws',
+      // connectHeaders: {
+      //   login: 'olfezsze:olfezsze',
+      //   passcode: '2qfDzwXQT97iMmEOjcHEOGmf4nnsxnzI',
+      // },
+      onConnect: () => {
+        client.subscribe(
+          topic,
+          (message) => {
+            // console.log(`Received: ${message.body}`);
+            // Disconnect after receiving the message
+            this.emit('message', message.body);
+            client.deactivate();
+          });
+      },
+      onStompError: (frame) => {
+        // Will be called in case of error
+        // console.log('Broker reported error: ' + frame.headers['message']);
+        // console.log('Additional details: ' + frame.body);
+      },
+      onWebSocketClose: (event) => {
+        // Will be called when WebSocket closes
+        // console.log('WebSocket connection closed: ', event);
+      },
     });
-  }
-  subscribe() {
-    // Subscribe to a topic
-    this.client.subscribe(this.mqttTopic);
-    // Handle incoming messages
-    this.client.on('message', function (topic, message) {
-      console.log(`message on ${topic}: ${JSON.parse(message.toString())}`);
-      this.emit('message', message);
-    });
+  
+    client.activate();
   }
   // utils
   getOs() {

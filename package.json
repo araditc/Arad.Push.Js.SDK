@@ -1,7 +1,7 @@
 {
-  "name": "met-generate-int",
+  "name": "arad-push-js-sdk",
   "version": "2.6.32",
-  "description": "return a random int between two int numbers",
+  "description": "arad push notification js sdk",
   "main": "dist/arad.js",
   "scripts": {
     "test": "npm run test",
@@ -9,16 +9,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/metadolism/met-random-int"
+    "url": "https://github.com/araditc/Arad.Push.Js.SDK"
   },
   "keywords": [
-    "random",
-    "int"
+    "arad",
+    "push",
+    "notification",
+    "js",
+    "sdk"
   ],
   "browser": {
     "assert": false
   },
-  "author": "metadolin",
+  "author": "aradict",
   "license": "ISC",
   "dependencies": {
     "buffer": "^6.0.3",

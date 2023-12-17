@@ -17,46 +17,44 @@ Always get the latest version with the following code
 
 Create an object of APN In your `App.js` (in react) or `App.vue` (in vuejs) and start coding
 ```js
-  //  initialize apn ↓
   const apn = new APN();
-  apn.init().then(() => {
-    console.log('Initialize successful');
 
-    // IMPORTANT: all connection configs will encrypt
-    // with AES alg and you have to set e secretKey
+  //  initialize apn ↓
+  apn.init(firebaseConfig, vapidKey).then(() => {
+    console.log('Initialize successful');
     apn.setKey('arad-secret-key');
 
     if (!apn.checkConfig()) {
-      // this methods check’s localStorage ecrypted config
-      // here you should set config for mqtt connection ↓
-      apn.setConfig('clientUserName', 'clientPassword', 'brokerURL');
+      apn.setConfig('clientUserName', 'clientPassword', 'connectionURL');
     }
-
-    // optional methods ↓
-    console.log(apn.getToken());
-    console.log(apn.getOs());
-    console.log(apn.getBrowser());
   }).catch((error) => {
     console.error('Error: ', error);
     // here you can handle retry to call apn.init()
   });
 
   // this will listen to notifications
-  apn.on('notif', (notif) => {
-    console.log('notification: ', notif);
+  apn.on('message', (message) => {
+    console.log('notification: ', message);
     // do something with notification data
   });
-  // initialize apn sdk ↑
 
 ```
 
+## Methods 
 
-| First Header  | Second Header |
+| Method | Info |
 | ------------- | ------------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
+| `init(firebaseConfig, vapidKey)`  | create a firebase account and get your `firebaseConfig` (object) and `vapidKey` (string) (promise) |
+| `setKey(key)` | set a **secretKey** to ecnrypt configs `void` |
+| `checkConfig()` | check if configs **defined** and **valid** `boolean` |
+| `setConfig()` | **set** connection data `void` |
+| `getToken()` | return firebase token `string` (return `null` before initilize complete) |
+| `getOs()` | return OS name `string` |
+| `getBrowser()` | return browser name `string` |
 
-| First Header  | Second Header |
+
+## Events
+
+| Event  | Info |
 | ---------- | ---------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
+| **message**  | trigger when a message received from server `apn.on('message', (message) => handleNotification())` |
