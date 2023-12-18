@@ -111,20 +111,22 @@ class Arad extends EventEmitter {
     }
     return ready;
   }
-  // connect
+  // connect to server
   connect() {
-    const topic = decryptConfig(localStorage.getItem('config')).username;
+    const config = this.decryptConfig(localStorage.getItem('config'), this.secretKey);
+    console.warn(config);
+    console.warn(this.broker);
     const client = new Client({
-      brokerURL: 'ws://127.0.0.1:15674/ws',
-      // connectHeaders: {
-      //   login: 'olfezsze:olfezsze',
-      //   passcode: '2qfDzwXQT97iMmEOjcHEOGmf4nnsxnzI',
-      // },
+      brokerURL: this.broker,
+      connectHeaders: {
+        login: config.username,
+        passcode: config.password,
+      },
       onConnect: () => {
         client.subscribe(
-          topic,
+          config.username,
           (message) => {
-            // console.log(`Received: ${message.body}`);
+            console.log(`Received: ${message.body}`);
             // Disconnect after receiving the message
             this.emit('message', message.body);
             client.deactivate();
@@ -132,16 +134,32 @@ class Arad extends EventEmitter {
       },
       onStompError: (frame) => {
         // Will be called in case of error
-        // console.log('Broker reported error: ' + frame.headers['message']);
-        // console.log('Additional details: ' + frame.body);
+        console.log('Broker reported error: ' + frame.headers['message']);
+        console.log('Additional details: ' + frame.body);
       },
       onWebSocketClose: (event) => {
         // Will be called when WebSocket closes
-        // console.log('WebSocket connection closed: ', event);
+        console.log('WebSocket connection closed: ', event);
       },
     });
   
     client.activate();
+  }
+  connectMQTT() {
+    const config = this.decryptConfig(localStorage.getItem('config'), this.secretKey);
+    config.clientId = this.generateClientId();
+    console.warn(config);
+    console.warn(this.broker);
+    console.log('▬ ▬ ▬', config);
+    this.client = mqtt.connect(this.broker, config);
+    this.client.on("connect", (err) => {
+      if (!err) {
+        // subscribe();
+        console.warn('MQTT CONNECTED to', this.broker);
+      } else {
+        console.log('can not connect to mqtt', err);
+      }
+    });
   }
   // utils
   getOs() {

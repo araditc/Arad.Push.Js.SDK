@@ -5,13 +5,13 @@
 ## Installation
 
 Always get the latest version with the following code
-`npm install arad-push-js-sdk`
+`npm install met-generate-int`
 
 ## How to use
 
 ### Import
 
-`import APN from arad-push-js-sdk’`
+`import APN from ‘met-generate-int’`
 
 ### usage
 
