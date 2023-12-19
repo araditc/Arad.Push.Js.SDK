@@ -1,6 +1,6 @@
 {
   "name": "arad-push-js-sdk",
-  "version": "2.6.40",
+  "version": "1.0.5",
   "description": "arad push notification js sdk",
   "main": "dist/arad.js",
   "scripts": {
