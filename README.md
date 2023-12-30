@@ -109,7 +109,7 @@ After getting the `firebaseConfig` and `vapidKey` try to create an object of APN
 >
 >```
 
-## Methods 
+## Methods in Arad
 
 | Method | Info |
 | ------------- | ------------- |
@@ -118,6 +118,11 @@ After getting the `firebaseConfig` and `vapidKey` try to create an object of APN
 | `checkConfig()` | check if configs **defined** and **valid** `boolean` |
 | `setConfig()` | **set** connection data `void` |
 | `getToken()` | return firebase token `string` (return `null` before initilize complete) |
+
+## Methods in DeviceUtils
+
+| Method | Info |
+| ------------- | ------------- |
 | `getOs()` | returns OS name `string` |
 | `getBrowser()` | returns browser name `string` |
 
@@ -126,4 +131,5 @@ After getting the `firebaseConfig` and `vapidKey` try to create an object of APN
 
 | Event  | Info |
 | ---------- | ---------- |
-| **message**  | trigger when a message received from server `apn.on('message', (message) => handleNotification())` |
+| **WakeUp**  | trigger when a message received from firebase, here you should call apn.getMessage() `apn.on('WakeUp', () => apn.getMessage())` |
+| **MessageReceive**  | trigger when a message received from server, here you should handle and show message in your application `apn.on('MessageReceive', (message) => handleNotification(message))` |

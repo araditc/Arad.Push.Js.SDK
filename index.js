@@ -11,10 +11,8 @@ class Arad extends EventEmitter {
   constructor() {
     super();
     // private data and functions
-    let fcm = null;
     let initing = false;
-    let broker = '';
-    // this.broker = 'wss://o77efe7a.ala.us-east-1.emqxsl.com:8084/mqtt';
+    let fcm = null;
     let secretKey = null;
     const generateClientId = function() {
       let result = 'omid-pwa-';
@@ -25,40 +23,19 @@ class Arad extends EventEmitter {
       }
       return result;
     }
-    const connectMQTT = function() {
-      const config = this.decryptConfig(localStorage.getItem('config'), this.secretKey);
-      config.clientId = generateClientId();
-      // console.warn(config);
-      // console.warn(broker);
-      // console.log('▬ ▬ ▬', config);
-      const client = mqtt.connect(broker, config);
-      client.on("connect", (err) => {
-        if (!err) {
-          // subscribe();
-          // console.warn('MQTT CONNECTED to', broker);
-        } else {
-          // console.log('can not connect to mqtt', err);
-        }
-      });
-    }
     const encryptConfig = function(plainText, secretKey) {
-      // console.log('ecn', plainText, secretKey);
       var ciphertext = CryptoJS.AES.encrypt(plainText, secretKey);
       return ciphertext.toString();
     }
     const decryptConfig = function(ciphertext, secretKey) {
-      // console.log('dec', ciphertext, secretKey);
       var bytes = CryptoJS.AES.decrypt(ciphertext, secretKey);
       var originalConfig = bytes.toString(CryptoJS.enc.Utf8);
       return JSON.parse(originalConfig);
     }
     const connect = function() {
-      // console.warn('start connecting ...');
       const config = this.decryptConfig(localStorage.getItem('config'), this.secretKey);
-      // console.warn(config);
-      // console.warn(this.broker);
       const client = new Client({
-        brokerURL: this.broker,
+        brokerURL: config.url,
         connectHeaders: {
           login: config.username,
           passcode: config.password,
@@ -67,16 +44,11 @@ class Arad extends EventEmitter {
           client.subscribe(
             config.username,
             (message) => {
-              // console.log(`Received: ${message.body}`);
-              // Disconnect after receiving the message
-              this.emit('message', message.body);
+              this.emit('MessageReceive', message.body);
               client.deactivate();
             });
         },
         onStompError: (frame) => {
-          // Will be called in case of error
-          // console.log('Broker reported error: ' + frame.headers['message']);
-          // console.warn('Additional details: ' + frame.body);
           console.warn('connection error', frame.headers['message']);
         },
         onWebSocketClose: (event) => {
@@ -88,9 +60,6 @@ class Arad extends EventEmitter {
       client.activate();
     }
     // public functions
-    this.publicFunction = function() {
-      privateFunction('from publicFunction');
-    }
     this.init = function(firebaseConfig, vapidkey) {
       return new Promise((resolve, reject) => {
         if (!initing) {
@@ -109,48 +78,45 @@ class Arad extends EventEmitter {
                   initing = false;
                 }
               }).catch((err) => {
-                // console.error('An error occurred while retrieving token. ', err);
                 reject('Can not init firebase.');
                 initing = false;
               });
-  
               // Handle incoming messages
               onMessage(messaging, (payload) => {
-                // console.log('Message received. ', payload.notification);
                 if (this.checkConfig()) {
-                  // connectMQTT(payload.notification);
-                  connect();
+                  this.emit('WakeUp', true);
                 }
               });
             } else {
-              // console.log('Unable to get permission to notify.');
+              // else
             }
           });
         }
       });
     }
+    this.getMessage = function() {
+      connect();
+    }
     this.checkConfig = function() { 
       const configObject = localStorage.getItem('config');
-      // console.log('checkConfig', secretKey);
       let ready = false;
       if (!configObject) {
-        ready = false;
+        return false;
       } else {
         const c = decryptConfig(configObject, secretKey);
-        if (c.username && c.username !== '' && c.username !== null && c.username !== undefined &&
-          c.password && c.password !== '' && c.password !== null && c.password !== undefined) {
-          ready = true;
-        } else {
-          ready = false;
+        for (let key in c) {
+          if (c[key] === null || c[key] === undefined || c[key] === '') {
+            return false;
+          }
         }
+        return true;
       }
-      return ready;
     }
-    this.setConfig = function(user, pass, url) {
-      broker = url;
+    this.setConfig = function(user, pass, connectUrl) {
       const config = {
         username: user,
         password: pass,
+        url: connectUrl,
       };
       // encrypt and store the config
       const encConfig = encryptConfig(JSON.stringify(config), secretKey);
@@ -161,8 +127,12 @@ class Arad extends EventEmitter {
     }
     this.setKey = function(key) {
       secretKey = key;
-      // console.log(key, secretKey);
     }
+  }
+}
+
+class DeviceUtils {
+  constructor() {
     this.getOs = function() {
       const userAgent = window.navigator.userAgent;
       const platform = window.navigator.platform;
@@ -205,4 +175,8 @@ class Arad extends EventEmitter {
     }
   }
 }
-module.exports = Arad;
+// class deviceUtils
+module.exports = {
+  Arad,
+  DeviceUtils
+};
