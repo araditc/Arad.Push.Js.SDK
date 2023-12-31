@@ -117,7 +117,7 @@ After getting the `firebaseConfig` and `vapidKey` try to create an object of APN
 | `setKey(key)` | set a **secretKey** to ecnrypt configs `void` |
 | `checkConfig()` | check if configs **defined** and **valid** `boolean` |
 | `setConfig()` | **set** connection data `void` |
-| `getMessage()` | **Get** message from serve when **WakeUp** event triggered `json` |
+| `getMessage()` | **Get** message from server `json` |
 | `getToken()` | return firebase token `string` (return `null` before initilize complete) |
 
 ## Methods in DeviceUtils
